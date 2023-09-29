@@ -115,7 +115,8 @@ function AuthProvider({children}:any){
                 logout,
                 loadingAuth,
                 loading,
-                setUser
+                setUser,
+                storageUser
             }}
             >
             {children}
