@@ -5,18 +5,26 @@ import { FiPlusCircle } from 'react-icons/fi'
 
 import { AuthContext } from '../../contexts/auth';
 import { db } from '../../services/firebaseConnection';
-import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, addDoc } from 'firebase/firestore';
+
+import { toast } from 'react-toastify';
 
 import './new.css';
 
 const listRef = collection(db, "customers");
 
+interface Customers {
+    id?: string;
+    nome?: string;
+    nomeFantasia?: string;
+}
+
 export default function New(){
     const { user } = useContext(AuthContext);
 
-    const [customers, setCustomers] = useState<object[]>([]);
+    const [customers, setCustomers] = useState <Customers[]>([]);
     const [loadCustomer, setLoadCustomer] = useState(true);
-    const [customerSelected, setCustomerSelected] = useState(0);
+    const [customerSelected, setCustomerSelected] = useState<number>(0);
 
     const [complemento, setComplemento] = useState('');
     const [assunto, setAssunto] = useState('Suporte');
@@ -25,10 +33,10 @@ export default function New(){
     useEffect(() => {
         async function loadCustomers(){
             const querySnapshot = await getDocs(listRef)
-            .then((snapshot) => {
+            .then((snapshot: any) => {
                 let lista: Array<object> = [];
 
-                snapshot.forEach((doc) => {
+                snapshot.forEach((doc: any) => {
                     lista.push({
                         id: doc.id,
                         nomeFantasia: doc.data().nomeFantasia
@@ -67,6 +75,29 @@ export default function New(){
         setCustomerSelected(event.target.value)
     }
 
+    async function handleRegister(event: any){
+        event.preventDefault();
+
+        await addDoc(collection(db, "chamados"), {
+            created: new Date(),
+            cliente: customers[customerSelected].nomeFantasia,
+            clienteId: customers[customerSelected].id,
+            assunto: assunto,
+            complemento: complemento,
+            status: status,
+            userId: user.uid
+        })
+        .then(() => {
+            toast.success("Chamado Registrado")
+            setComplemento('')
+            setCustomerSelected(event)
+        })
+        .catch((error) => {
+            toast.error('Ops erro ao registrar, tente mais tarde')
+            console.log(error);
+        })
+    }
+
     return(
         <div>
             <Header/>
@@ -77,7 +108,7 @@ export default function New(){
                 </Title>
 
                 <div className='container'>
-                    <form className="form-profile">
+                    <form className="form-profile" onSubmit={handleRegister}>
                         
                         <label>Clientes</label>
                         {
